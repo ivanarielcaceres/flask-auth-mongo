@@ -80,7 +80,7 @@ def new_user():
         user = User(username=username, fullname=fullname)
         user.hash_password(password)
         user.save()
-    return jsonify({'username': user.username, 'fullname': user.fullname}), 201, {'Location': url_for('get_user', id=user.id, _external=True)}
+    return jsonify({'username': user.username, 'fullname': user.fullname})
 
 @app.route('/api/login')
 @auth.login_required
