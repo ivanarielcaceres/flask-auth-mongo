@@ -24,6 +24,7 @@ db = MongoEngine(app)
 
 class User(Document):
     username = StringField(max_length=32)
+    fullname = StringField(max_length=100)
     password_hash = StringField()
 
     def hash_password(self, password):
@@ -65,33 +66,32 @@ def verify_password(username_or_token, password):
     g.user = user
     return True
 
-@app.route('/api/users', methods=['POST'])
+@app.route('/api/signup', methods=['POST'])
 def new_user():
     username = request.json.get('username')
     password = request.json.get('password')
-    if username is None or password is None:
+    fullname = request.json.get('fullname')
+    if username is None or password is None or fullname is None:
         abort(400)
     try:
         User.objects.get(username=username)
         abort(400)
     except User.DoesNotExist:
-        user = User(username=username)
+        user = User(username=username, fullname=fullname)
         user.hash_password(password)
         user.save()
-    return jsonify({'username': user.username}), 201, {'Location': url_for('get_user', id=user.id, _external=True)}
+    return jsonify({'username': user.username, 'fullname': user.fullname}), 201, {'Location': url_for('get_user', id=user.id, _external=True)}
 
-
-@app.route('/api/resource')
-@auth.login_required
-def get_resource():
-    return jsonify({'text':'Hello {}'.format(g.user.username)})
-
-
-@app.route('/api/token')
+@app.route('/api/login')
 @auth.login_required
 def get_auth_token():
     token = g.user.generate_auth_token()
     return jsonify({'token': token.decode('ascii')})
+
+@app.route('/api/fetch')
+@auth.login_required
+def get_resource():
+    return jsonify({'text':'Hello {}'.format(g.user.username)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',
