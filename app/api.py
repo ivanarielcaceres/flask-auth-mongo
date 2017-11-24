@@ -1,6 +1,5 @@
-import bson
-from model.project import Project
-from model.user import User
+from app.model.project import Project
+from app.model.user import User
 from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_httpauth import HTTPBasicAuth
@@ -8,7 +7,7 @@ from werkzeug.security import check_password_hash
 from flask import abort, request, jsonify, g
 
 app = Flask(__name__)
-app.config.from_object('config.DevelopmentConfig')
+app.config.from_object('app.config.DevelopmentConfig')
 auth = HTTPBasicAuth()
 db = MongoEngine(app)
 

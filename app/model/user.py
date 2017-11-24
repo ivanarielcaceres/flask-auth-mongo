@@ -1,8 +1,9 @@
+import bson
 from mongoengine import Document, StringField
 from werkzeug.security import generate_password_hash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-                          
+
 class User(Document):
     username = StringField(max_length=32)
     fullname = StringField(max_length=100)
