@@ -1,4 +1,5 @@
 import bson
+from model.project import Project
 from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_httpauth import HTTPBasicAuth
@@ -47,7 +48,6 @@ class User(Document):
         user = User.objects.get(id=bson.objectid.ObjectId(data['id']))
         return user
 
-
 @auth.verify_password
 def verify_password(username_or_token, password):
     user = User.verify_auth_token(username_or_token)
@@ -67,7 +67,7 @@ def verify_password(username_or_token, password):
     return True
 
 @app.route('/api/signup', methods=['POST'])
-def new_user():
+def signup():
     username = request.json.get('username')
     password = request.json.get('password')
     fullname = request.json.get('fullname')
@@ -82,16 +82,42 @@ def new_user():
         user.save()
     return jsonify({'username': user.username, 'fullname': user.fullname})
 
-@app.route('/api/login')
+@app.route('/api/login', methods=['GET'])
 @auth.login_required
-def get_auth_token():
+def get_token():
     token = g.user.generate_auth_token()
     return jsonify({'token': token.decode('ascii')})
 
-@app.route('/api/fetch')
+@app.route('/api/users', methods=['GET'])
 @auth.login_required
-def get_resource():
-    return jsonify({'text':'Hello {}'.format(g.user.username)})
+def get_user_info():
+    username = request.args.get('username')
+    user = User.objects.get(username=username)
+    return jsonify({'username': user.username,  'fullname': user.fullname})
+
+@app.route('/api/projects', methods=['GET'])
+@auth.login_required
+def get_projects():
+    projects = Project.objects
+    for project in projects:
+        print('PROJECT NAME {}'.format(project.name))
+
+    return jsonify({'projects': projects})
+
+@app.route('/api/projects', methods=['POST'])
+@auth.login_required
+def create_project():
+    name = request.json.get('name')
+    description = request.json.get('description')
+    if name is None or description is None:
+        abort(400)
+    try:
+        Project.objects.get(name=name)
+        abort(400)
+    except Project.DoesNotExist:
+        project = Project(name=name, description=description)
+        project.save()
+    return jsonify({'name': project.name, 'description': project.description})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',
