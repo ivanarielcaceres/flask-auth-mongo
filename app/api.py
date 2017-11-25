@@ -61,10 +61,8 @@ def get_user_info():
 @app.route('/api/projects', methods=['GET'])
 @auth.login_required
 def get_projects():
-    projects = Project.objects
-    for project in projects:
-        print('PROJECT NAME {}'.format(project.name))
-
+    author = g.user
+    projects = Project.objects(author=author)
     return jsonify({'projects': projects})
 
 @app.route('/api/projects', methods=['POST'])
@@ -72,12 +70,13 @@ def get_projects():
 def create_project():
     name = request.json.get('name')
     description = request.json.get('description')
+    author = g.user
     if name is None or description is None:
         abort(400)
     try:
         Project.objects.get(name=name)
         abort(400)
     except Project.DoesNotExist:
-        project = Project(name=name, description=description)
+        project = Project(name=name, description=description, author = author)
         project.save()
     return jsonify({'name': project.name, 'description': project.description})

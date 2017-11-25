@@ -8,7 +8,7 @@ class User(Document):
     username = StringField(max_length=32)
     fullname = StringField(max_length=100)
     password_hash = StringField()
-
+    
     def hash_password(self, password):
         self.password_hash = generate_password_hash(password)
 
