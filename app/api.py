@@ -7,7 +7,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 from flask import abort, request, jsonify, g
 
-UPLOAD_FOLDER='/root/pictures/'
+UPLOAD_FOLDER='/var/www/html/pictures/'
 app = Flask(__name__)
 app.config.from_object('app.config.DevelopmentConfig')
 auth = HTTPBasicAuth()
@@ -88,4 +88,4 @@ def save_images(images, project):
         image_bytes = bytearray(image_decoded)
         with open(file_name, 'wb') as f:
             f.write(image_bytes)
-            project.files_path.append(file_name)
+            project.files_path.append('pictures/'+project.name + str(count) + '.png')
