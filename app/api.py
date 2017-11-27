@@ -1,4 +1,4 @@
-import tempfile
+import base64
 from app.model.project import Project
 from app.model.user import User
 from flask import Flask
@@ -7,6 +7,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 from flask import abort, request, jsonify, g
 
+UPLOAD_FOLDER='/root/pictures/'
 app = Flask(__name__)
 app.config.from_object('app.config.DevelopmentConfig')
 auth = HTTPBasicAuth()
@@ -72,20 +73,19 @@ def create_project():
     description = request.json.get('description')
     author = g.user
     
-    image = request.json.get('image')
-    image_decoded = base64.b64decode(image)
-    image_bytes = bytearray(image_decoded)    
-    if name is None or description is None:
-        abort(400)
-
+    images = request.json.get('images')
     project = Project(name=name, description=description, author = author)
-    save_image(image_bytes, project)
+    save_images(images, project)
     project.save()
     return jsonify({'name': project.name, 'description': project.description})
 
-def save_image(image_bytes):
-    with tempfile.TemporaryFile() as f:
-        f.write(image_bytes)
-        f.flush()
-        f.seek(0)
-        project.image.put(f)
+def save_images(images, project):
+    count = 0
+    for image in images:
+        file_name = UPLOAD_FOLDER + project.name +  str(count) +'.png'
+        count += 1
+        image_decoded = base64.b64decode(image)
+        image_bytes = bytearray(image_decoded)
+        with open(file_name, 'wb') as f:
+            f.write(image_bytes)
+            project.files_path.append(file_name)
