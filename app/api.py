@@ -1,3 +1,4 @@
+import tempfile
 from app.model.project import Project
 from app.model.user import User
 from flask import Flask
@@ -54,8 +55,7 @@ def get_token():
 @app.route('/api/users', methods=['GET'])
 @auth.login_required
 def get_user_info():
-    username = request.args.get('username')
-    user = User.objects.get(username=username)
+    user = g.user
     return jsonify({'username': user.username,  'fullname': user.fullname})
 
 @app.route('/api/projects', methods=['GET'])
@@ -71,12 +71,21 @@ def create_project():
     name = request.json.get('name')
     description = request.json.get('description')
     author = g.user
+    
+    image = request.json.get('image')
+    image_decoded = base64.b64decode(image)
+    image_bytes = bytearray(image_decoded)    
     if name is None or description is None:
         abort(400)
-    try:
-        Project.objects.get(name=name)
-        abort(400)
-    except Project.DoesNotExist:
-        project = Project(name=name, description=description, author = author)
-        project.save()
+
+    project = Project(name=name, description=description, author = author)
+    save_image(image_bytes, project)
+    project.save()
     return jsonify({'name': project.name, 'description': project.description})
+
+def save_image(image_bytes):
+    with tempfile.TemporaryFile() as f:
+        f.write(image_bytes)
+        f.flush()
+        f.seek(0)
+        project.image.put(f)
