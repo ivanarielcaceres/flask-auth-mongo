@@ -6,12 +6,15 @@ from flask_mongoengine import MongoEngine
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 from flask import abort, request, jsonify, g
+from flasgger import Swagger
 
 UPLOAD_FOLDER='/var/www/html/pictures/'
+
 app = Flask(__name__)
 app.config.from_object('app.config.DevelopmentConfig')
 auth = HTTPBasicAuth()
 db = MongoEngine(app)
+Swagger(app)
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -58,6 +61,18 @@ def get_token():
 def get_user_info():
     user = g.user
     return jsonify({'username': user.username,  'fullname': user.fullname})
+
+@app.route('/api/verify_user', methods=['POST'])
+def verify_user_login():
+    username = request.json.get('username')
+    try:
+        User.objects.get(username=username)
+        response = True
+    except User.DoesNotExist:
+        response = False
+    return jsonify({'exists': response})
+    
+
 
 @app.route('/api/projects', methods=['GET'])
 @auth.login_required
